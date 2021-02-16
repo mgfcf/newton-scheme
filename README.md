@@ -1,6 +1,6 @@
-# neville-aitken
+# newton-scheme
 
-This website calculates an interpolation polynomial using the Neville-Aitken algorithm.
+This website calculates an interpolation polynomial using the Newton-Scheme based on divided differences.
 
 The site can be found here:
-https://linus-k519.github.io/neville-aitken
+https://mgfcf.github.io/newton-scheme/
