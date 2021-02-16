@@ -10,9 +10,9 @@ function parse_input() {
     return {x, support_points}
 }
 
-function render_nev_ait() {
+function render_newton() {
     const input = parse_input()
-    const n = new NevAit(input.support_points)
+    const n = new Newton(input.support_points)
     const result = n.toString(input.x)
     document.getElementById("output").innerHTML = result
 }
@@ -21,13 +21,13 @@ function render_nev_ait() {
 // Add automatic calculation on enter
 document.getElementById('support_points_input').addEventListener("keyup", function(event) {
     if (event.key === "Enter") {
-        render_nev_ait()
+        render_newton()
     }
 });
 
 // Add automatic calculation on enter
 document.getElementById('x_input').addEventListener("keyup", function(event) {
     if (event.key === "Enter") {
-        render_nev_ait()
+        render_newton()
     }
 });

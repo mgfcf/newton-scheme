@@ -5,7 +5,7 @@ const POINTS_TABLE_H_SEP = '═'
 const POINTS_TABLE_X_SEP = '╬'
 const POINTS_TABLE_V_SEP = '║'
 
-class NevAit {
+class Newton {
     constructor(support_points) {
         this.support_points = support_points
         if (typeof(support_points[0].x == 'undefined')) {
@@ -14,40 +14,33 @@ class NevAit {
         } else {
             this.support_points = this.support_points.map(tuple => {return {x: new Fraction(tuple.x), y: new Fraction(tuple.y)}})
         }
-        this.p_list = [[]]
-        this.number_space = 2   // Space that will be available for a single number without destroying the output string
-        this.multi_line = false //! Currently not in use, keep on false // If set to true, it prints a more elaborate version
+        this.div_diff_list = [[]]
+        this.factors_list = []
+        this.number_space = 1   // Space that will be available for a single number without destroying the output string
+        this.formular_space = 25
     }
 
-    p(k, l, x) {
+    div_diff(k, l, x) {
         if (k == l) {
             return this.support_points[k].y
         }
 
-        // Create row in p_list if not existing
-        if (this.p_list[k] === undefined) {
-            this.p_list[k] = []
+        // Create row in div_diff_list if not existing
+        if (this.div_diff_list[k] === undefined) {
+            this.div_diff_list[k] = []
         }
 
-        // Calculate the p if it has not been yet
-        if (this.p_list[k][l] === undefined) {
+        // Calculate the divided difference if it has not been yet
+        if (this.div_diff_list[k][l] === undefined) {
             // Fetch xk and xl
             const xk = this.support_points[k].x
             const xl = this.support_points[l].x
 
             // Calculate divided difference
-            this.p_list[k][l] = (x.sub(xk).mul(this.p(k + 1, l, x)).sub(x.sub(xl).mul(this.p(k, l - 1, x)))).div(xl.sub(xk))
+            this.div_diff_list[k][l] = this.div_diff(k + 1, l, x).sub(this.div_diff(k, l - 1, x)).div(xl.sub(xk))
         }
 
-
-        // console.log(`(${x}-${xk})*${this.p(k + 1, l, x)} - (${x}-${xl})*${this.p(k, l - 1, x)}`)
-        // console.log('--------------------------------')
-        // console.log(`${xl}-${xk}`)
-        // console.log(`P${k},${l} = ${numerator} / ${denumerator} = ${result}`)
-        // console.log()
-        // p_list[k] = result
-
-        return this.p_list[k][l]
+        return this.div_diff_list[k][l]
     }
 
     evaluate(x) {
@@ -55,10 +48,18 @@ class NevAit {
         const l = new Fraction(this.support_points.length - 1)
         x = new Fraction(x)
 
-        // Reset p_list
-        this.p_list = [[]]
+        // Reset div_diff_list
+        this.div_diff_list = [[]]
 
-        return this.p(k, l, x)
+        var result = this.div_diff(k, l, x)
+        this.calcFactors()
+
+        return result
+    }
+
+    calcFactors() {
+        this.factors_list = []
+
     }
 
     getPointTableHeader() {
@@ -112,7 +113,7 @@ class NevAit {
         return margin + a + margin + POINTS_TABLE_V_SEP + margin + b + margin
     }
 
-    getNevAitRow(r, x) {
+    getNewtonRow(r, x) {
         let k = Math.floor((r - 1) / 2)
         const max_param = this.support_points.length - 1
 
@@ -124,36 +125,39 @@ class NevAit {
         let result = "";
         if (r % 2 == 0) {
             l = k + 2
-            result += " ".repeat(this.getNevAitPLength())
+            result += " ".repeat(this.getNewtonDivDiffLength())
         }
 
-        let first = true
         while (k >= 0 && l <= max_param) {
-            if (first == false) {
-                result += " ".repeat(this.getNevAitPLength())
-            } else {
-                first = false
-            }
-
-            result += this.getNevAitP(k, l, x)
+            result += this.getNewtonDivDiff(k, l, x).padEnd(this.getNewtonDivDiffLength(), " ")
+            result += " ".repeat(this.getNewtonDivDiffLength())
 
             k -= 1
             l += 1
         }
 
-        return result
+        return result.trimEnd()
     }
 
-    getNevAitPLength() {
-        return 42
+    getNewtonDivDiffLength() {
+        return this.formular_space
     }
 
-    getNevAitP(k, l, x) {
+    getNewtonDivDiff(k, l, x) {
         const xk = this.support_points[k].x
         const xl = this.support_points[l].x
-        const numerator = `(${x.toFraction()}-${xk.toFraction()})*${this.p(k + 1, l, x).toFraction()} - (${x.toFraction()}-${xl.toFraction()})*${this.p(k, l - 1, x).toFraction()}`
-        const denumerator = `${xl.toFraction()}-${xk.toFraction()}`
-        return `P<sub>${k},${l}</sub> = (${numerator}) / (${denumerator}) = ${this.p(k, l, x).toFraction()}`
+        const numerator = `${this.printFrac(this.div_diff(k + 1, l, x))} - ${this.printFrac(this.div_diff(k, l - 1, x))}`
+        const denumerator = `${this.printFrac(xl)}-${this.printFrac(xk)}`
+        return `(${numerator}) / (${denumerator}) = ${this.printFrac(this.div_diff(k, l, x))}`
+    }
+
+    printFrac(x) {
+        var output = x.toFraction()
+        if (x["s"] < 0) {
+            output = `(${output})`
+        }
+        
+        return output
     }
 
     toString(x) {
@@ -170,7 +174,7 @@ class NevAit {
         for (let row = 0; row < row_count; row++) {
             result += this.getPointsTableRow(row);
             result += " "
-            result += this.getNevAitRow(row, x);
+            result += this.getNewtonRow(row, x);
             result += "\n"
         }
 
