@@ -68,10 +68,6 @@ class Newton {
 
         header += "\n"
         const space_length = (row_length - 1) / 2
-        if (this.multi_line) {
-            const buffer_row = " ".repeat(space_length) + POINTS_TABLE_V_SEP + " ".repeat(space_length) + "\n"
-            header = buffer_row + header + buffer_row
-        }
 
         header += POINTS_TABLE_H_SEP.repeat(space_length) + POINTS_TABLE_X_SEP + POINTS_TABLE_H_SEP.repeat(space_length)
         return header + "\n"
@@ -84,15 +80,10 @@ class Newton {
     }
 
     getLineHeight() {
-        if (this.multi_line) {
-            return 1
-        } else {
-            return 3
-        }
+        return 1
     }
 
     getPointsTableRow(r) {
-        //! Multiline not implemented
         if (r % 2 == 0) {
             const index = Math.floor(r / 2)
             return this.getPointsTableEntry(this.support_points[index].x, this.support_points[index].y)
