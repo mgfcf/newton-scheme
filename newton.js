@@ -20,7 +20,7 @@ class Newton {
         this.formular_space = 25
     }
 
-    div_diff(k, l, x) {
+    div_diff(k, l) {
         if (k == l) {
             return this.support_points[k].y
         }
@@ -37,21 +37,20 @@ class Newton {
             const xl = this.support_points[l].x
 
             // Calculate divided difference
-            this.div_diff_list[k][l] = this.div_diff(k + 1, l, x).sub(this.div_diff(k, l - 1, x)).div(xl.sub(xk))
+            this.div_diff_list[k][l] = this.div_diff(k + 1, l).sub(this.div_diff(k, l - 1)).div(xl.sub(xk))
         }
 
         return this.div_diff_list[k][l]
     }
 
-    evaluate(x) {
+    evaluate() {
         const k = new Fraction(0)
         const l = new Fraction(this.support_points.length - 1)
-        x = new Fraction(x)
 
         // Reset div_diff_list
         this.div_diff_list = [[]]
 
-        var result = this.div_diff(k, l, x)
+        var result = this.div_diff(k, l)
         this.calcFactors()
 
         return result
@@ -60,6 +59,9 @@ class Newton {
     calcFactors() {
         this.factors_list = []
 
+        for (let l = 0; l < this.support_points.length; l++) {
+            this.factors_list.push(this.div_diff(0,l))
+        }
     }
 
     getPointTableHeader() {
@@ -104,7 +106,7 @@ class Newton {
         return margin + a + margin + POINTS_TABLE_V_SEP + margin + b + margin
     }
 
-    getNewtonRow(r, x) {
+    getNewtonRow(r) {
         let k = Math.floor((r - 1) / 2)
         const max_param = this.support_points.length - 1
 
@@ -120,7 +122,7 @@ class Newton {
         }
 
         while (k >= 0 && l <= max_param) {
-            result += this.getNewtonDivDiff(k, l, x).padEnd(this.getNewtonDivDiffLength(), " ")
+            result += this.getNewtonDivDiff(k, l).padEnd(this.getNewtonDivDiffLength(), " ")
             result += " ".repeat(this.getNewtonDivDiffLength())
 
             k -= 1
@@ -134,27 +136,40 @@ class Newton {
         return this.formular_space
     }
 
-    getNewtonDivDiff(k, l, x) {
+    getNewtonDivDiff(k, l) {
         const xk = this.support_points[k].x
         const xl = this.support_points[l].x
-        const numerator = `${this.printFrac(this.div_diff(k + 1, l, x))} - ${this.printFrac(this.div_diff(k, l - 1, x))}`
+        const numerator = `${this.printFrac(this.div_diff(k + 1, l))} - ${this.printFrac(this.div_diff(k, l - 1))}`
         const denumerator = `${this.printFrac(xl)}-${this.printFrac(xk)}`
-        return `(${numerator}) / (${denumerator}) = ${this.printFrac(this.div_diff(k, l, x))}`
+        return `(${numerator}) / (${denumerator}) = ${this.printFrac(this.div_diff(k, l), false)}`
     }
 
-    printFrac(x) {
+    printFrac(x, negativeBrackets = true) {
         var output = x.toFraction()
-        if (x["s"] < 0) {
+        if (negativeBrackets && x["s"] < 0) {
             output = `(${output})`
         }
         
         return output
     }
 
-    toString(x) {
-        this.evaluate(x)
+    getNewtonFunc(n) {
+        if (n == 0) {
+            return ""
+        }
+
+        var result = ""
+
+        for (let i = 0; i < n; i++) {
+            result += `(x-${this.printFrac(this.support_points[i].x)})`
+        }
+
+        return result
+    }
+
+    toString() {
+        this.evaluate()
         let result = this.getPointTableHeader()
-        x = new Fraction(x)
 
         // Row count:
         // 2 * #SupportPoints so that there is a row for every suppport point and a row inbetween
@@ -163,10 +178,30 @@ class Newton {
 
         // Generate row by row
         for (let row = 0; row < row_count; row++) {
-            result += this.getPointsTableRow(row);
+            result += this.getPointsTableRow(row)
             result += " "
-            result += this.getNewtonRow(row, x);
+            result += this.getNewtonRow(row)
             result += "\n"
+        }
+
+        // Print factors
+        result += "\n\n"
+        for (let l = 0; l < this.factors_list.length; l++) {
+            result += `a<sub>${l}</sub> = ${this.printFrac(this.factors_list[l], false)}`
+            result += "\n"
+        }
+
+        // Print polynom
+        result += "\n\nP(x) = "
+        for (let l = 0; l < this.factors_list.length; l++) {
+            var a = this.factors_list[l]
+            if (l != 0) {
+                result += " "
+            }
+            if (l != 0 && a["s"] >= 0) {
+                result += "+"
+            }
+            result += this.printFrac(a, false) + this.getNewtonFunc(l)
         }
 
         return result
