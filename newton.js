@@ -8,6 +8,7 @@ const POINTS_TABLE_V_SEP = '║'
 class Newton {
     constructor(support_points) {
         this.support_points = support_points
+        this.nevait = new NevAit(support_points)
         if (typeof(support_points[0].x == 'undefined')) {
             // Map tuples to object points
             this.support_points = this.support_points.map(tuple => {return {x: new Fraction(tuple[0]), y: new Fraction(tuple[1])}})
@@ -43,17 +44,17 @@ class Newton {
         return this.div_diff_list[k][l]
     }
 
-    evaluate() {
+    evaluate(x) {
         const k = new Fraction(0)
         const l = new Fraction(this.support_points.length - 1)
 
         // Reset div_diff_list
         this.div_diff_list = [[]]
 
-        var result = this.div_diff(k, l)
+        this.div_diff(k, l)
         this.calcFactors()
 
-        return result
+        return this.nevait.evaluate(x)
     }
 
     calcFactors() {
@@ -167,8 +168,9 @@ class Newton {
         return result
     }
 
-    toString() {
-        this.evaluate()
+    toString(x) {
+        var y = this.evaluate(x)
+        x = new Fraction(x)
         let result = this.getPointTableHeader()
 
         // Row count:
@@ -203,6 +205,10 @@ class Newton {
             }
             result += this.printFrac(a, false) + this.getNewtonFunc(l)
         }
+
+        // Print evaluation
+        result += "\n\n"
+        result += `P(${this.printFrac(x, false)}) = ${this.printFrac(y, false)}`
 
         return result
     }
